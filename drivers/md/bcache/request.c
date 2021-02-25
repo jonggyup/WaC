@@ -518,6 +518,7 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 	struct bio *n, *bio = &s->bio.bio;
 	struct bkey *bio_key;
 	unsigned int ptr;
+	int weight = bio->bi_css->cgroup->weight;
 
 	if (bkey_cmp(k, &KEY(s->iop.inode, bio->bi_iter.bi_sector, 0)) <= 0)
 		return MAP_CONTINUE;
@@ -545,7 +546,8 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 	ptr = 0;
 	
 	//Maybe the initization of priority in the case of cache hit (Jonggyu)
-	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO;
+	//Modified INITIAL_PRIO to weighted one
+	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO + weight;
 
 	if (KEY_DIRTY(k))
 		s->read_dirty_data = true;
