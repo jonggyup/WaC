@@ -4817,7 +4817,7 @@ static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
 	}
 	/*kwonje*/
 	if(cgrp->weight!=0)
-		printk("css id: %d\n",css->id);
+//		printk("css id: %d\n",css->id);
 	return css;
 
 err_list_del:
@@ -5063,13 +5063,13 @@ static void kill_css(struct cgroup_subsys_state *css)
 	
 	
 	lockdep_assert_held(&cgroup_mutex);
-	printk("dying css weight: %d id: %d cgrp id: %d\n",css->cgroup->weight,css->id, css->cgroup->id);
+//	printk("dying css weight: %d id: %d cgrp id: %d\n",css->cgroup->weight,css->id, css->cgroup->id);
 	
 	/* kwonje */
 	if(css->cgroup->weight!=0&&css->parent != NULL){
 		parent= css->parent;
 		parent->cgroup->total_weight-=css->cgroup->weight;
-		printk("dying-parent weight:%d %d, id: %d cgrp id: %d\n",parent->cgroup->weight,parent->parent->cgroup->weight,parent->id,parent->cgroup->id);
+//		printk("dying-parent weight:%d %d, id: %d cgrp id: %d\n",parent->cgroup->weight,parent->parent->cgroup->weight,parent->id,parent->cgroup->id);
 		css->cgroup->weight=0;
 		traverse_css_weight(next,parent);
 	}	
@@ -5117,7 +5117,7 @@ static void traverse_css_weight(struct cgroup_subsys_state *pos, struct cgroup_s
 		if(pos->cgroup->weight==0)
 			continue;
 		pos->cgroup->ratio = parent -> cgroup -> ratio * pos -> cgroup -> weight / parent -> cgroup->total_weight;
-		printk("dying-sibling weight: %d id: %d ratio: %d\n",pos->cgroup->weight,pos->id,pos->cgroup->ratio);
+//		printk("dying-sibling weight: %d id: %d ratio: %d\n",pos->cgroup->weight,pos->id,pos->cgroup->ratio);
 		if((next=css_next_child(NULL,pos))!=NULL){
 			traverse_css_weight(next,pos);
 		}
