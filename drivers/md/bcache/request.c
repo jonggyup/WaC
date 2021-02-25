@@ -543,7 +543,8 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 
 	/* XXX: figure out best pointer - for multiple cache devices */
 	ptr = 0;
-
+	
+	//Maybe the initization of priority in the case of cache hit (Jonggyu)
 	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO;
 
 	if (KEY_DIRTY(k))

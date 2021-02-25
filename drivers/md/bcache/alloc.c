@@ -262,7 +262,7 @@ static void invalidate_buckets_random(struct cache *ca)
 		}
 	}
 }
-
+/* Bcache Eviction (Jonggyu) */
 static void invalidate_buckets(struct cache *ca)
 {
 	BUG_ON(ca->invalidate_needs_gc);
