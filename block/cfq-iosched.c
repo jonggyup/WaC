@@ -1825,7 +1825,7 @@ static void traverse_css_weight(struct cgroup_subsys_state *pos, struct cgroup_s
 	
 	css_for_each_child(pos,parent){
 		pos->cgroup->ratio=parent->cgroup->ratio*pos->cgroup->weight / parent->cgroup->total_weight;
-		printk("sibling weight: %d id: %d ratio:%d\n",pos->cgroup->weight,pos->id,pos->cgroup->ratio);
+//		printk("sibling weight: %d id: %d ratio:%d\n",pos->cgroup->weight,pos->id,pos->cgroup->ratio);
 
 		if((next=css_next_child(NULL,pos))!=NULL)
 			traverse_css_weight(next,pos);
