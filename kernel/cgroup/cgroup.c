@@ -4816,7 +4816,7 @@ static struct cgroup_subsys_state *css_create(struct cgroup *cgrp,
 		ss->warned_broken_hierarchy = true;
 	}
 	/*kwonje*/
-	if(cgrp->weight!=0)
+//	if(cgrp->weight!=0)
 //		printk("css id: %d\n",css->id);
 	return css;
 
