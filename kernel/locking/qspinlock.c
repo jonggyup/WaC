@@ -310,7 +310,7 @@ void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 {
 	struct mcs_spinlock *prev, *next, *node, *origin, *vict=NULL,*sprev=NULL,*temp=NULL;
 	u32 old, tail,ntail;
-	int idx, weight, flag=0,tinfo=0;
+	int idx, weight, flag=0, tinfo=0;
 
 	BUILD_BUG_ON(CONFIG_NR_CPUS >= (1U << _Q_TAIL_CPU_BITS));
 
@@ -422,6 +422,7 @@ pv_queue:
 	}
 	node->locked = 0;
 	node->next = NULL;
+	node->nid = numa_node_id();
 	pv_init_node(node);
 
 	/*
@@ -565,77 +566,39 @@ locked:
 		}*/
 
 	}
-	if (next){
-			if(flag&&next->weight<1000){
-				origin = next;
-				smp_wmb();	
-				while(origin){
-					if(!vict){
-						vict=origin;
+	if (next && next->nid != node->nid){
+		if(flag&&next->weight<1000){
+			origin = next;
+			smp_wmb();	
+			while(origin){
+				if(!vict){
+					vict=origin;
+				}
+				if(origin->next&&origin->next->next){
+					if(vict->weight/100 < origin->next->weight/100 && origin->next->weight < 1000 ){
+						sprev=origin;
+						vict=origin->next;
+						flag=0;
 					}
-				//	printk("in queue: %d\n",origin->weight);
-					if(origin->next&&origin->next->next){
-/*					if(origin->next){*/
-						if(vict->weight/100<origin->next->weight/100&&origin->next->weight<1000){
-							sprev=origin;
-							vict=origin->next;
-//							printk("weight: ori-%d vict-%d!\n",origin->weight,vict->weight);
-					/*		if(origin->next->next==NULL)
-								flag=1;
-							else*/
-								flag=0;
-						}
-					}else if(origin->next==NULL){
-						break;
-					}/*else if(origin->next->next==NULL){
-						if(vict->weight/100<origin->next->weight/100&&origin->next->weight<1000)
-							flag=1;
-					}*/
-					origin=origin->next;
+				} else if(origin->next==NULL){
+					break;
 				}
-//				printk("out of loop\n");
-				smp_wmb();
+				origin=origin->next;
+			}
+			smp_wmb();
 
-				if(!flag){
-					/*if(vict->next==NULL){
-//						printk("tail!\n");
-						tinfo=sprev->weight/10;
-						ntail=encode_tail(sprev->weight%10,tinfo%10);
-						flag=1;
-					}*/
-					smp_wmb();
-//					printk("linking!");
-		
-					next->weight+=100;
-					sprev->next=vict->next;
-//					WRITE_ONCE(sprev->next,vict->next);
-//					printk("link1");
-					smp_wmb();
-		/*			if(flag){
-						old=xchg_tail(lock,ntail);
-						next->weight+=100;
-//						printk("changed");
-					}*/
-//					atomic_xchg_relaxed(sprev->next,vict->next);
-					smp_wmb();
-					WRITE_ONCE(vict->next,next);
-//					atomic_xchg_relaxed(vict->next,next);
-//					vict->next=next;
-//					printk("link2");
-					smp_wmb();
-//					vict->next=READ_ONCE(next);
-					next=READ_ONCE(vict);
-//					atomic_xchg_relaxed(next,vict);
-//					next=vict;
-//					printk("link3");
-				
-				}
+			if(!flag){
 				smp_wmb();
-				
-//				printk("next: %d\n",next->weight);
-//				smp_wmb();
-				
-			}		
+				next->weight+=100;
+				sprev->next=vict->next;
+				smp_wmb();
+				WRITE_ONCE(vict->next,next);
+				smp_wmb();
+				next=READ_ONCE(vict);
+			}
+			smp_wmb();
+
+		}		
 	}
 	arch_mcs_spin_unlock_contended(&next->locked);
 	pv_kick_node(lock, next);

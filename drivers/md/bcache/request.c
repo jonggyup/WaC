@@ -547,7 +547,7 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 	
 	//Maybe the initization of priority in the case of cache hit (Jonggyu)
 	//Modified INITIAL_PRIO to weighted one
-	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO * (weight / 400);
+	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO * (weight / 100);
 
 	if (KEY_DIRTY(k))
 		s->read_dirty_data = true;
