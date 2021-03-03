@@ -566,7 +566,9 @@ locked:
 		}*/
 
 	}
+	//Jonggyu
 	if (next && next->nid != node->nid){
+//	if (next){
 		if(flag&&next->weight<1000){
 			origin = next;
 			smp_wmb();	
