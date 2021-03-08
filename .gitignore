@@ -58,6 +58,18 @@ modules.builtin
 /System.map
 /Module.markers
 
+Code/tags
+Code/TAGS
+Code/linux
+Code/vmlinux
+Code/vmlinux.32
+Code/vmlinux-gdb.py
+Code/vmlinuz
+Code/System.map
+Code/Module.markers
+
+
+
 #
 # RPM spec file (make rpm-pkg)
 #
@@ -132,3 +144,5 @@ all.config
 
 # Kdevelop4
 *.kdev4
+
+*.result

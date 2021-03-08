@@ -1,0 +1,36 @@
+tmp: (g=0): rw=randread, bs=(R) 4096B-4096B, (W) 4096B-4096B, (T) 4096B-4096B, ioengine=libaio, iodepth=4
+fio-3.1
+Starting 1 process
+tmp: Laying out IO file (1 file / 1024MiB)
+
+tmp: (groupid=0, jobs=1): err= 0: pid=21402: Fri Mar  5 20:23:56 2021
+   read: IOPS=25.1k, BW=97.0MiB/s (103MB/s)(1024MiB/10451msec)
+    slat (usec): min=5, max=133705, avg=15.93, stdev=457.48
+    clat (usec): min=11, max=146785, avg=142.25, stdev=896.12
+     lat (usec): min=18, max=146795, avg=158.34, stdev=1061.48
+    clat percentiles (usec):
+     |  1.00th=[  101],  5.00th=[  106], 10.00th=[  111], 20.00th=[  115],
+     | 30.00th=[  118], 40.00th=[  121], 50.00th=[  124], 60.00th=[  128],
+     | 70.00th=[  133], 80.00th=[  141], 90.00th=[  157], 95.00th=[  174],
+     | 99.00th=[  253], 99.50th=[  306], 99.90th=[ 2311], 99.95th=[ 2671],
+     | 99.99th=[13698]
+   bw (  KiB/s): min=40552, max=112560, per=99.66%, avg=99988.35, stdev=20247.35, samples=20
+   iops        : min=10138, max=28140, avg=24997.05, stdev=5061.82, samples=20
+  lat (usec)   : 20=0.15%, 50=0.05%, 100=0.68%, 250=98.09%, 500=0.76%
+  lat (usec)   : 750=0.02%, 1000=0.03%
+  lat (msec)   : 2=0.10%, 4=0.12%, 10=0.01%, 20=0.01%, 50=0.01%
+  lat (msec)   : 100=0.01%, 250=0.01%
+  cpu          : usr=5.18%, sys=35.16%, ctx=177628, majf=0, minf=52
+  IO depths    : 1=0.1%, 2=0.1%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
+     submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
+     issued rwt: total=262144,0,0, short=0,0,0, dropped=0,0,0
+     latency   : target=0, window=0, percentile=100.00%, depth=4
+
+Run status group 0 (all jobs):
+   READ: bw=97.0MiB/s (103MB/s), 97.0MiB/s-97.0MiB/s (103MB/s-103MB/s), io=1024MiB (1074MB), run=10451-10451msec
+
+Disk stats (read/write):
+    bcache0: ios=258500/127, merge=0/0, ticks=35520/504, in_queue=36084, util=99.07%, aggrios=131072/132073, aggrmerge=0/2, aggrticks=15755/2340, aggrin_queue=21146, aggrutil=98.98%
+  sdb: ios=261632/58, merge=0/0, ticks=31503/170, in_queue=31380, util=88.63%
+  nvme1n1: ios=512/264088, merge=0/5, ticks=7/4511, in_queue=10912, util=98.98%
