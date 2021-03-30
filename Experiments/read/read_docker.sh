@@ -1,7 +1,6 @@
 #!/bin/bash
 for p in 1
 do
-	(cd ../../bcache && ./start.sh)
 	#init
 	systemctl stop docker
 	#	umount /mnt

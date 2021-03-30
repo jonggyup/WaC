@@ -28,6 +28,7 @@ do
 	sudo docker run \
 	--blkio-weight=${weight} \
 	--name test$weight \
+	-v /mnt/group$weight:/mnt \
 	-v /mnt/group$weight/datadir:/var/lib/mysql \
 	-v /mnt/group$weight/logdir:/var/log/mysql \
 	-v /mnt/group$weight/conf:/etc/mysql/conf.d \

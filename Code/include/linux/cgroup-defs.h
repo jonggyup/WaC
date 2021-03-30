@@ -345,6 +345,7 @@ struct cgroup {
 	int ratio;
 	int weight;
 	int	nr_pages;
+	int nr_buckets;
 	int total_weight;	
 	
 	/*

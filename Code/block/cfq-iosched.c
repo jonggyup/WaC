@@ -1862,6 +1862,7 @@ static int __cfq_set_weight(struct cgroup_subsys_state *css, u64 val,
 	/*adding blkio weight to the cgroup value kwonje*/
 	
 	css->cgroup->weight = val;
+	css->cgroup->nr_buckets = 0; //Jonggyu
 //	printk("setting weight: %lld, id:%d cgrp id:%d\n",val, css->id, css->cgroup->id);
 	
 	if(css->parent != NULL){

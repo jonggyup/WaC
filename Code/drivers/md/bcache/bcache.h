@@ -189,6 +189,7 @@
 #include <linux/types.h>
 #include <linux/workqueue.h>
 #include <linux/kthread.h>
+#include <linux/cgroup.h> /* Added by Jonggyu */
 
 #include "bset.h"
 #include "util.h"
@@ -200,6 +201,7 @@ struct bucket {
 	uint8_t		gen;
 	uint8_t		last_gc; /* Most out of date gen in the btree */
 	uint16_t	gc_mark; /* Bitfield used by GC. See below for field */
+	struct cgroup *cgroup; /* Added by Jonggyu for WaR */
 };
 
 /*
@@ -464,6 +466,7 @@ struct cache {
 	atomic_long_t		sectors_written;
 
 	char			cache_dev_name[BDEVNAME_SIZE];
+	int total_nbuckets; //Jonggyu
 };
 
 struct gc_stat {
@@ -948,14 +951,14 @@ void __bch_invalidate_one_bucket(struct cache *ca, struct bucket *b);
 void __bch_bucket_free(struct cache *ca, struct bucket *b);
 void bch_bucket_free(struct cache_set *c, struct bkey *k);
 
-long bch_bucket_alloc(struct cache *ca, unsigned int reserve, bool wait);
+long bch_bucket_alloc(struct cache *ca, unsigned int reserve, bool wait, struct cgroup *cg);
 int __bch_bucket_alloc_set(struct cache_set *c, unsigned int reserve,
-			   struct bkey *k, int n, bool wait);
+			   struct bkey *k, int n, bool wait, struct cgroup *cg);
 int bch_bucket_alloc_set(struct cache_set *c, unsigned int reserve,
-			 struct bkey *k, int n, bool wait);
+			 struct bkey *k, int n, bool wait, struct cgroup *cg);
 bool bch_alloc_sectors(struct cache_set *c, struct bkey *k,
 		       unsigned int sectors, unsigned int write_point,
-		       unsigned int write_prio, bool wait);
+		       unsigned int write_prio, bool wait, struct cgroup *cg); //Jonggyu
 bool bch_cached_dev_error(struct cached_dev *dc);
 
 __printf(2, 3)

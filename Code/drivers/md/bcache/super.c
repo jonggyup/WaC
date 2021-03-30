@@ -422,7 +422,7 @@ static int __uuid_write(struct cache_set *c)
 	closure_init_stack(&cl);
 	lockdep_assert_held(&bch_register_lock);
 
-	if (bch_bucket_alloc_set(c, RESERVE_BTREE, &k.key, 1, true))
+	if (bch_bucket_alloc_set(c, RESERVE_BTREE, &k.key, 1, true, NULL)) //Jonggyu
 		return 1;
 
 	SET_KEY_SIZE(&k.key, c->sb.bucket_size);
@@ -555,7 +555,7 @@ void bch_prio_write(struct cache *ca)
 		p->magic	= pset_magic(&ca->sb);
 		p->csum		= bch_crc64(&p->magic, bucket_bytes(ca) - 8);
 
-		bucket = bch_bucket_alloc(ca, RESERVE_PRIO, true);
+		bucket = bch_bucket_alloc(ca, RESERVE_PRIO, true, NULL);
 		BUG_ON(bucket == -1);
 
 		mutex_unlock(&ca->set->bucket_lock);
@@ -1714,6 +1714,7 @@ struct cache_set *bch_cache_set_alloc(struct cache_sb *sb)
 	c->nr_uuids		= bucket_bytes(c) / sizeof(struct uuid_entry);
 	c->devices_max_used	= 0;
 	atomic_set(&c->attached_dev_nr, 0);
+
 	c->btree_pages		= bucket_pages(c);
 	if (c->btree_pages > BTREE_MAX_PAGES)
 		c->btree_pages = max_t(int, c->btree_pages / 4,
@@ -1994,7 +1995,8 @@ found:
 		c->sb.seq		= ca->sb.seq;
 		pr_debug("set version = %llu", c->sb.version);
 	}
-
+	//Jonggyu
+	ca->total_nbuckets = 0;
 	kobject_get(&ca->kobj);
 	ca->set = c;
 	ca->set->cache[ca->sb.nr_this_dev] = ca;

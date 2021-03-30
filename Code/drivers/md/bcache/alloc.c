@@ -67,6 +67,8 @@
 #include <linux/blkdev.h>
 #include <linux/kthread.h>
 #include <linux/random.h>
+#include <linux/cgroup.h> /* Added by Jonggyu */
+
 #include <trace/events/bcache.h>
 
 #define MAX_OPEN_BUCKETS 128
@@ -148,6 +150,8 @@ void __bch_invalidate_one_bucket(struct cache *ca, struct bucket *b)
 
 	bch_inc_gen(ca, b);
 	b->prio = INITIAL_PRIO;
+	//Jonggyu
+	b->cgroup = NULL;
 	atomic_inc(&b->pin);
 }
 
@@ -177,17 +181,43 @@ static void bch_invalidate_one_bucket(struct cache *ca, struct bucket *b)
 #define bucket_max_cmp(l, r)	(bucket_prio(l) < bucket_prio(r))
 #define bucket_min_cmp(l, r)	(bucket_prio(l) > bucket_prio(r))
 
+//Does the cache owner (cgroup) have more than the threshold? //Jonggyu
+static int bch_can_evict_war(struct cache *ca, struct bucket *b)
+{
+	int total_buckets_in_use = ca->total_nbuckets;
+	int total_buckets_by_bcache = ca->set->nbuckets - ca->set->avail_nbuckets;
+	struct cgroup *cg = b->cgroup;
+	if (cg != NULL && cg->weight != 1000 && cg->weight != 500) {
+		//printk ("weight = %d, nr_buckets = %d, ratio = %d, #ofbuckets = %d #buckets = %d", cg->weight, cg->nr_buckets, cg->ratio, total_buckets_in_use, total_buckets_by_bcache); 
+		if (cg->nr_buckets >= cg->ratio * total_buckets_in_use / 100)
+			return 1;
+		else
+			return 0;
+	}
+	return 1;
+}
+
+//Jonggyu
+//buckets in use = c->set->nbuckets - c->avail_nbuckets
 static void invalidate_buckets_lru(struct cache *ca)
 {
 	struct bucket *b;
 	ssize_t i;
+	int need_force = 0;
 
 	ca->heap.used = 0;
 
+again:
 	for_each_bucket(b, ca) {
 		if (!bch_can_invalidate_bucket(ca, b))
 			continue;
 
+		//Added by Jonggyu
+		if (need_force == 0)
+		{
+			if (!bch_can_evict_war(ca, b))
+				continue;
+		}
 		if (!heap_full(&ca->heap))
 			heap_add(&ca->heap, b, bucket_max_cmp);
 		else if (bucket_max_cmp(b, heap_peek(&ca->heap))) {
@@ -195,6 +225,12 @@ static void invalidate_buckets_lru(struct cache *ca)
 			heap_sift(&ca->heap, 0, bucket_max_cmp);
 		}
 	}
+	if (heap_empty(&ca->heap))
+	{
+		need_force = 1;
+		goto again;
+	}
+	need_force = 0;
 
 	for (i = ca->heap.used / 2 - 1; i >= 0; --i)
 		heap_sift(&ca->heap, i, bucket_min_cmp);
@@ -210,6 +246,12 @@ static void invalidate_buckets_lru(struct cache *ca)
 			return;
 		}
 
+		//Jonggyu
+		if (b->cgroup != NULL && b->cgroup->weight != 500 && b->cgroup->weight != 1000)
+		{
+			b->cgroup->nr_buckets--;
+			ca->total_nbuckets--;
+		}
 		bch_invalidate_one_bucket(ca, b);
 	}
 }
@@ -386,7 +428,7 @@ out:
 
 /* Allocation */
 
-long bch_bucket_alloc(struct cache *ca, unsigned int reserve, bool wait)
+long bch_bucket_alloc(struct cache *ca, unsigned int reserve, bool wait, struct cgroup *cg)
 {
 	DEFINE_WAIT(w);
 	struct bucket *b;
@@ -454,6 +496,13 @@ out:
 		ca->set->avail_nbuckets--;
 		bch_update_bucket_in_use(ca->set, &ca->set->gc_stats);
 	}
+	//Jonggyu
+	b->cgroup = cg;
+	if (cg != NULL && cg->weight != 1000 && cg->weight != 500){
+		b->cgroup->nr_buckets++;
+		ca->total_nbuckets++;	
+		//printk("nr_buckets = %d", b->cgroup->nr_buckets);
+	}
 
 	return r;
 }
@@ -479,7 +528,7 @@ void bch_bucket_free(struct cache_set *c, struct bkey *k)
 }
 
 int __bch_bucket_alloc_set(struct cache_set *c, unsigned int reserve,
-			   struct bkey *k, int n, bool wait)
+			   struct bkey *k, int n, bool wait, struct cgroup *cg)
 {
 	int i;
 
@@ -492,7 +541,7 @@ int __bch_bucket_alloc_set(struct cache_set *c, unsigned int reserve,
 
 	for (i = 0; i < n; i++) {
 		struct cache *ca = c->cache_by_alloc[i];
-		long b = bch_bucket_alloc(ca, reserve, wait);
+		long b = bch_bucket_alloc(ca, reserve, wait, cg);
 
 		if (b == -1)
 			goto err;
@@ -512,12 +561,12 @@ err:
 }
 
 int bch_bucket_alloc_set(struct cache_set *c, unsigned int reserve,
-			 struct bkey *k, int n, bool wait)
+			 struct bkey *k, int n, bool wait, struct cgroup *cg)
 {
 	int ret;
 
 	mutex_lock(&c->bucket_lock);
-	ret = __bch_bucket_alloc_set(c, reserve, k, n, wait);
+	ret = __bch_bucket_alloc_set(c, reserve, k, n, wait, cg);
 	mutex_unlock(&c->bucket_lock);
 	return ret;
 }
@@ -597,16 +646,18 @@ found:
  *
  * If s->writeback is true, will not fail.
  */
+//Jonggyu, added struct cgroup *cg into the function parameter
 bool bch_alloc_sectors(struct cache_set *c,
 		       struct bkey *k,
 		       unsigned int sectors,
 		       unsigned int write_point,
 		       unsigned int write_prio,
-		       bool wait)
+		       bool wait, struct cgroup *cg)
 {
 	struct open_bucket *b;
 	BKEY_PADDED(key) alloc;
 	unsigned int i;
+//	struct cgroup *ori_cg; //Jonggyu
 
 	/*
 	 * We might have to allocate a new bucket, which we can't do with a
@@ -624,13 +675,11 @@ bool bch_alloc_sectors(struct cache_set *c,
 			: RESERVE_NONE;
 
 		spin_unlock(&c->data_bucket_lock);
-
-		if (bch_bucket_alloc_set(c, watermark, &alloc.key, 1, wait))
+		if (bch_bucket_alloc_set(c, watermark, &alloc.key, 1, wait, cg))
 			return false;
-
+		
 		spin_lock(&c->data_bucket_lock);
 	}
-
 	/*
 	 * If we had to allocate, we might race and not need to allocate the
 	 * second time we call pick_data_bucket(). If we allocated a bucket but

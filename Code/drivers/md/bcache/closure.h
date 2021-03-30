@@ -6,6 +6,7 @@
 #include <linux/sched.h>
 #include <linux/sched/task_stack.h>
 #include <linux/workqueue.h>
+#include <linux/cgroup.h>
 
 /*
  * Closure is perhaps the most overused and abused term in computer science, but
@@ -154,7 +155,7 @@ struct closure {
 	struct closure		*parent;
 
 	atomic_t		remaining;
-
+	struct cgroup *cgroup; //Jonggyu
 #ifdef CONFIG_BCACHE_CLOSURES_DEBUG
 #define CLOSURE_MAGIC_DEAD	0xc054dead
 #define CLOSURE_MAGIC_ALIVE	0xc054a11e
@@ -273,6 +274,7 @@ static inline void closure_init(struct closure *cl, struct closure *parent)
 {
 	memset(cl, 0, sizeof(struct closure));
 	cl->parent = parent;
+	cl->cgroup = NULL;
 	if (parent)
 		closure_get(parent);
 

@@ -195,12 +195,17 @@ static void bch_data_insert_endio(struct bio *bio)
 
 	bch_bbio_endio(op->c, bio, bio->bi_status, "writing data to cache");
 }
-
+//Jonggyu
 static void bch_data_insert_start(struct closure *cl)
 {
 	struct data_insert_op *op = container_of(cl, struct data_insert_op, cl);
 	struct bio *bio = op->bio, *n;
-
+	struct cgroup *cg = NULL;
+	
+	//Jonggyu
+	if (cl->parent && cl->parent->cgroup)
+		cg = cl->parent->cgroup;
+	
 	if (op->bypass)
 		return bch_data_invalidate(cl);
 
@@ -230,11 +235,21 @@ static void bch_data_insert_start(struct closure *cl)
 		bkey_init(k);
 		SET_KEY_INODE(k, op->inode);
 		SET_KEY_OFFSET(k, bio->bi_iter.bi_sector);
-
+		
+		if (cg)
+		{
+			//printk("bio weight = %d", cg->weight);
+			if (!bch_alloc_sectors(op->c, k, bio_sectors(bio),
+						op->write_point, op->write_prio,
+						op->writeback, cg)) //added bio->bi_css->cgroup
+				goto err;
+		}
+		else {
 		if (!bch_alloc_sectors(op->c, k, bio_sectors(bio),
 				       op->write_point, op->write_prio,
-				       op->writeback))
+				       op->writeback, NULL)) //added bio->bi_css->cgroup
 			goto err;
+		}
 
 		n = bio_next_split(bio, KEY_SIZE(k), GFP_NOIO, split);
 
@@ -518,7 +533,7 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 	struct bio *n, *bio = &s->bio.bio;
 	struct bkey *bio_key;
 	unsigned int ptr;
-	int weight = bio->bi_css->cgroup->weight;
+//	int weight = bio->bi_css->cgroup->weight; //Jonggyu
 
 	if (bkey_cmp(k, &KEY(s->iop.inode, bio->bi_iter.bi_sector, 0)) <= 0)
 		return MAP_CONTINUE;
@@ -547,7 +562,8 @@ static int cache_lookup_fn(struct btree_op *op, struct btree *b, struct bkey *k)
 	
 	//Maybe the initization of priority in the case of cache hit (Jonggyu)
 	//Modified INITIAL_PRIO to weighted one
-	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO * (weight / 100);
+//	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO * (weight / 100);
+	PTR_BUCKET(b->c, k, ptr)->prio = INITIAL_PRIO;
 
 	if (KEY_DIRTY(k))
 		s->read_dirty_data = true;
@@ -818,6 +834,12 @@ static void cached_dev_read_done(struct closure *cl)
 	 * to the buffers the original bio pointed to:
 	 */
 
+	//Jonggyu
+	if (s && s->orig_bio && s->orig_bio->bi_css && s->orig_bio->bi_css->cgroup)
+		cl->cgroup = s->orig_bio->bi_css->cgroup;
+	else
+		cl->cgroup = NULL;
+
 	if (s->iop.bio) {
 		bio_reset(s->iop.bio);
 		s->iop.bio->bi_iter.bi_sector =
@@ -1038,6 +1060,12 @@ static void cached_dev_write(struct cached_dev *dc, struct search *s)
 	}
 
 insert_data:
+
+	if (s && s->orig_bio && s->orig_bio->bi_css && s->orig_bio->bi_css->cgroup)
+		cl->cgroup = s->orig_bio->bi_css->cgroup; //Jonggyu
+	else
+		cl->cgroup = NULL;
+
 	closure_call(&s->iop.cl, bch_data_insert, NULL, cl);
 	continue_at(cl, cached_dev_write_complete, NULL);
 }

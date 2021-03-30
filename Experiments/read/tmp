@@ -3,24 +3,25 @@ fio-3.1
 Starting 1 process
 tmp: Laying out IO file (1 file / 1024MiB)
 
-tmp: (groupid=0, jobs=1): err= 0: pid=21402: Fri Mar  5 20:23:56 2021
-   read: IOPS=25.1k, BW=97.0MiB/s (103MB/s)(1024MiB/10451msec)
-    slat (usec): min=5, max=133705, avg=15.93, stdev=457.48
-    clat (usec): min=11, max=146785, avg=142.25, stdev=896.12
-     lat (usec): min=18, max=146795, avg=158.34, stdev=1061.48
+tmp: (groupid=0, jobs=1): err= 0: pid=7361: Mon Mar 22 16:08:41 2021
+   read: IOPS=26.0k, BW=102MiB/s (107MB/s)(1024MiB/10069msec)
+    slat (usec): min=5, max=122135, avg=14.29, stdev=338.64
+    clat (nsec): min=998, max=141975k, avg=138108.82, stdev=670576.87
+     lat (usec): min=17, max=141984, avg=152.53, stdev=791.98
     clat percentiles (usec):
      |  1.00th=[  101],  5.00th=[  106], 10.00th=[  111], 20.00th=[  115],
      | 30.00th=[  118], 40.00th=[  121], 50.00th=[  124], 60.00th=[  128],
      | 70.00th=[  133], 80.00th=[  141], 90.00th=[  157], 95.00th=[  174],
-     | 99.00th=[  253], 99.50th=[  306], 99.90th=[ 2311], 99.95th=[ 2671],
-     | 99.99th=[13698]
-   bw (  KiB/s): min=40552, max=112560, per=99.66%, avg=99988.35, stdev=20247.35, samples=20
-   iops        : min=10138, max=28140, avg=24997.05, stdev=5061.82, samples=20
-  lat (usec)   : 20=0.15%, 50=0.05%, 100=0.68%, 250=98.09%, 500=0.76%
-  lat (usec)   : 750=0.02%, 1000=0.03%
-  lat (msec)   : 2=0.10%, 4=0.12%, 10=0.01%, 20=0.01%, 50=0.01%
+     | 99.00th=[  251], 99.50th=[  302], 99.90th=[ 2212], 99.95th=[ 2606],
+     | 99.99th=[ 3982]
+   bw (  KiB/s): min=50688, max=112920, per=99.98%, avg=104119.20, stdev=13747.35, samples=20
+   iops        : min=12672, max=28230, avg=26029.80, stdev=3436.84, samples=20
+  lat (nsec)   : 1000=0.01%
+  lat (usec)   : 10=0.01%, 20=0.15%, 50=0.05%, 100=0.68%, 250=98.10%
+  lat (usec)   : 500=0.77%, 750=0.01%, 1000=0.03%
+  lat (msec)   : 2=0.09%, 4=0.11%, 10=0.01%, 20=0.01%, 50=0.01%
   lat (msec)   : 100=0.01%, 250=0.01%
-  cpu          : usr=5.18%, sys=35.16%, ctx=177628, majf=0, minf=52
+  cpu          : usr=5.35%, sys=35.61%, ctx=180002, majf=0, minf=53
   IO depths    : 1=0.1%, 2=0.1%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, >=64=0.0%
      submit    : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
      complete  : 0=0.0%, 4=100.0%, 8=0.0%, 16=0.0%, 32=0.0%, 64=0.0%, >=64=0.0%
@@ -28,9 +29,9 @@ tmp: (groupid=0, jobs=1): err= 0: pid=21402: Fri Mar  5 20:23:56 2021
      latency   : target=0, window=0, percentile=100.00%, depth=4
 
 Run status group 0 (all jobs):
-   READ: bw=97.0MiB/s (103MB/s), 97.0MiB/s-97.0MiB/s (103MB/s-103MB/s), io=1024MiB (1074MB), run=10451-10451msec
+   READ: bw=102MiB/s (107MB/s), 102MiB/s-102MiB/s (107MB/s-107MB/s), io=1024MiB (1074MB), run=10069-10069msec
 
 Disk stats (read/write):
-    bcache0: ios=258500/127, merge=0/0, ticks=35520/504, in_queue=36084, util=99.07%, aggrios=131072/132073, aggrmerge=0/2, aggrticks=15755/2340, aggrin_queue=21146, aggrutil=98.98%
-  sdb: ios=261632/58, merge=0/0, ticks=31503/170, in_queue=31380, util=88.63%
-  nvme1n1: ios=512/264088, merge=0/5, ticks=7/4511, in_queue=10912, util=98.98%
+    bcache0: ios=256061/65, merge=0/0, ticks=34828/88, in_queue=34972, util=98.95%, aggrios=131086/133046, aggrmerge=0/3, aggrticks=15714/1819, aggrin_queue=21046, aggrutil=99.36%
+  sdb: ios=261632/40, merge=0/4, ticks=31412/117, in_queue=31588, util=91.51%
+  nvme1n1: ios=541/266052, merge=0/3, ticks=17/3521, in_queue=10504, util=99.36%
