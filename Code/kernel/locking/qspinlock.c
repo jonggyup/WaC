@@ -174,7 +174,7 @@ static __always_inline u32 xchg_tail(struct qspinlock *lock, u32 tail)
 	 * MCS node is properly initialized before updating the tail.
 	 */
 	return (u32)xchg_relaxed(&lock->tail,
-				 tail >> _Q_TAIL_OFFSET) << _Q_TAIL_OFFSET;
+			tail >> _Q_TAIL_OFFSET) << _Q_TAIL_OFFSET;
 }
 
 #else /* _Q_PENDING_BITS == 8 */
@@ -265,12 +265,12 @@ static __always_inline void set_locked(struct qspinlock *lock)
 
 static __always_inline void __pv_init_node(struct mcs_spinlock *node) { }
 static __always_inline void __pv_wait_node(struct mcs_spinlock *node,
-					   struct mcs_spinlock *prev) { }
+		struct mcs_spinlock *prev) { }
 static __always_inline void __pv_kick_node(struct qspinlock *lock,
-					   struct mcs_spinlock *node) { }
+		struct mcs_spinlock *node) { }
 static __always_inline u32  __pv_wait_head_or_lock(struct qspinlock *lock,
-						   struct mcs_spinlock *node)
-						   { return 0; }
+		struct mcs_spinlock *node)
+{ return 0; }
 
 #define pv_enabled()		false
 
@@ -329,7 +329,7 @@ void queued_spin_lock_slowpath(struct qspinlock *lock, u32 val)
 	if (val == _Q_PENDING_VAL) {
 		int cnt = _Q_PENDING_LOOPS;
 		val = atomic_cond_read_relaxed(&lock->val,
-					       (VAL != _Q_PENDING_VAL) || !cnt--);
+				(VAL != _Q_PENDING_VAL) || !cnt--);
 	}
 
 	/*
@@ -390,7 +390,7 @@ pv_queue:
 	tail = encode_tail(smp_processor_id(), idx);
 
 	node += idx;
-	
+
 	/*
 	 * Ensure that we increment the head node->count before initialising
 	 * the actual node. If the compiler is kind enough to reorder these
@@ -400,14 +400,14 @@ pv_queue:
 
 	/*it stores weight value of process into the mcs_lock kwonje*/	
 	if(task_css_set(current)->subsys[3]!=NULL){
-			
+
 		weight = task_css_set(current)->subsys[3]->cgroup->weight;
 		//printk("weight: %d\n",weight);
 		node->weight = weight;
 		if(node->weight!=500&&node->weight!=1000&&node->weight>=100){
 			//printk("node->weight = %d\n",node->weight);
-/*			if(idx>0)
-				printk("idx: %d cpu: %d\n",idx,smp_processor_id());*/
+			/*			if(idx>0)
+						printk("idx: %d cpu: %d\n",idx,smp_processor_id());*/
 			if(node->weight==501)
 				node->weight=500;
 			flag=1;
@@ -449,7 +449,7 @@ pv_queue:
 	 */
 	old = xchg_tail(lock, tail);
 	next = NULL;
-	
+
 	/*
 	 * if there was a previous node; link it and wait until reaching the
 	 * head of the waitqueue.
@@ -477,7 +477,7 @@ pv_queue:
 
 		prefetchw(next);
 
-		
+
 	}
 
 	/*
@@ -525,7 +525,7 @@ locked:
 	 * necessary acquire semantics required for locking.
 	 */
 	if (((val & _Q_TAIL_MASK) == tail) &&
-	    atomic_try_cmpxchg_relaxed(&lock->val, &val, _Q_LOCKED_VAL))
+			atomic_try_cmpxchg_relaxed(&lock->val, &val, _Q_LOCKED_VAL))
 		goto release; /* No contention */
 
 	/* Either somebody is queued behind us or _Q_PENDING_VAL is set */
@@ -537,47 +537,23 @@ locked:
 	 */
 	if (!next){
 		next = smp_cond_load_relaxed(&node->next, (VAL));
-/*		if(next)
-		if(flag&&next->weight<1000){
-			origin = next;
-			
-			while(origin){
-				if(!vict){
-					vict=origin;
-				}
-				if(origin->next&&origin->next->next!=NULL){
-					if(vict->weight/100<origin->next->weight/100&&origin->next->weight<1000){
-						sprev=origin;
-						vict=origin->next;
-					//	printk("weight: ori-%d vict-%d!\n",origin->weight,vict->weight);
-						flag=0;
-					}
-				}else if(origin->next==NULL){
-					break;
-				}
-				origin=origin->next;
-			}
-			if(!flag){
-				sprev->next=vict->next;
-				vict->next=next;
-				next=vict;
-				smp_wmb();
-			}
-		}*/
-
 	}
 	//Jonggyu
-	if (next && next->nid != node->nid){
-//	if (next){
-		if(flag&&next->weight<1000){
+	if (next){
+		if(flag && next->weight< 1000){
 			origin = next;
-			smp_wmb();	
 			while(origin){
 				if(!vict){
 					vict=origin;
 				}
 				if(origin->next&&origin->next->next){
-					if(vict->weight/100 < origin->next->weight/100 && origin->next->weight < 1000 ){
+					origin->next->weight += 100; //aging
+					if(vict->weight/100 < origin->next->weight/100){
+						sprev=origin;
+						vict=origin->next;
+						flag=0;
+					}
+					else if(vict->weight/100 == origin->next->weight/100 && origin->next->nid == node->nid){
 						sprev=origin;
 						vict=origin->next;
 						flag=0;
@@ -585,21 +561,19 @@ locked:
 				} else if(origin->next==NULL){
 					break;
 				}
+
 				origin=origin->next;
 			}
 			smp_wmb();
 
 			if(!flag){
 				smp_wmb();
-				next->weight+=100;
 				sprev->next=vict->next;
 				smp_wmb();
 				WRITE_ONCE(vict->next,next);
 				smp_wmb();
 				next=READ_ONCE(vict);
 			}
-			smp_wmb();
-
 		}		
 	}
 	arch_mcs_spin_unlock_contended(&next->locked);

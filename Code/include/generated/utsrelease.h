@@ -1,1 +1,1 @@
-#define UTS_RELEASE "4.19.24PIOS"
+#define UTS_RELEASE "4.19.24tmp"
