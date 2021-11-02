@@ -553,11 +553,6 @@ locked:
 						vict=origin->next;
 						flag=0;
 					}
-					else if(vict->weight/100 == origin->next->weight/100 && origin->next->nid == node->nid){
-						sprev=origin;
-						vict=origin->next;
-						flag=0;
-					}
 				} else if(origin->next==NULL){
 					break;
 				}
