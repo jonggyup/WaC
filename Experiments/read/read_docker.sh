@@ -11,13 +11,13 @@ do
 	systemctl start docker
 
 	docker pull keinoh/journal:1.5
-
+	
 	#cache flush
 	free -m
 	sync
 	echo 3 > /proc/sys/vm/drop_caches
 	free -m
-
+	rm /mnt/*
 	#execute 4 container with fio running
 
 	for weight in 100 200 400 800
